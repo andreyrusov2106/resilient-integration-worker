@@ -1,0 +1,25 @@
+﻿version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: integration_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  worker:
+    build:
+      context: .
+      dockerfile: IntegrationWorker.Service/Dockerfile
+    depends_on:
+      - postgres
+    environment:
+      - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=integration_db;Username=postgres;Password=postgres
+
+volumes:
+  postgres_data:

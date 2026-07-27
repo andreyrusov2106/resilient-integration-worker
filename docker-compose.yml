@@ -1,0 +1,32 @@
+﻿version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: integration_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Добавляем проверку здоровья базы данных
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d integration_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    build:
+      context: .
+      dockerfile: IntegrationWorker.Service/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy # Ждём, пока postgres не станет healthy
+    environment:
+      - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=integration_db;Username=postgres;Password=postgres
+
+volumes:
+  postgres_data:
